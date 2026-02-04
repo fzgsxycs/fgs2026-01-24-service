@@ -1,0 +1,47 @@
+# 数据库配置
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/computer_association
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+  # 自动执行SQL脚本配置
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/*.sql
+  # 邮件配置
+  mail:
+    host: smtp.163.com
+    port: 465
+    username: 18065143863@163.com
+    password: ZCkcZ3GDA8JqZvvP
+    from: 18065143863@163.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: false
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.example.computerassociation.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# JWT配置
+jwt:
+  secret: computer_association_secret_key  # JWT密钥，生产环境中应更安全
+  expiration: 86400  # JWT过期时间（秒），默认为24小时
+# 日志配置
+logging:
+  level:
+    com.example.computerassociation: DEBUG
+    org.springframework.mail: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
