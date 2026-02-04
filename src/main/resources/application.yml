@@ -1,9 +1,9 @@
 # 数据库配置
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/computer_association
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: 123456
+    password: 
     driver-class-name: org.postgresql.Driver
   # 自动执行SQL脚本配置
   sql:
@@ -25,6 +25,18 @@ spring:
             enable: true
           starttls:
             enable: false
+  # 环境配置
+  profiles:
+    active: prod
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
 
 # MyBatis-Plus配置
 mybatis-plus:
@@ -38,6 +50,7 @@ mybatis-plus:
 jwt:
   secret: computer_association_secret_key  # JWT密钥，生产环境中应更安全
   expiration: 86400  # JWT过期时间（秒），默认为24小时
+
 # 日志配置
 logging:
   level:
