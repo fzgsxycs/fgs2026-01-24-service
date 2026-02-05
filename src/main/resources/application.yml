@@ -1,16 +1,17 @@
 # 数据库配置
 spring:
+  profiles:
+    include: liquibase
   datasource:
     url: jdbc:postgresql://localhost:5432/computer_association
     username: postgres
     password: 123456
     driver-class-name: org.postgresql.Driver
-  # 自动执行SQL脚本配置
+  # 自动执行SQL脚本配置（已禁用，使用Liquibase）
   sql:
     init:
-      mode: always
-      schema-locations: classpath:sql/*.sql
-  # 邮件配置
+      mode: never
+ # 邮件配置
   mail:
     host: smtp.163.com
     port: 465
@@ -38,6 +39,7 @@ mybatis-plus:
 jwt:
   secret: computer_association_secret_key  # JWT密钥，生产环境中应更安全
   expiration: 86400  # JWT过期时间（秒），默认为24小时
+  
 # 日志配置
 logging:
   level:
