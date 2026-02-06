@@ -3,20 +3,16 @@ package com.example.computerassociation.service.impl;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.computerassociation.dto.RegisterDTO;
 import com.example.computerassociation.entity.User;
 import com.example.computerassociation.mapper.UserMapper;
-import com.example.computerassociation.dto.UserDTO;
 import com.example.computerassociation.service.UserService;
+import com.example.computerassociation.util.MailUtil;
 import com.example.computerassociation.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
-import jakarta.mail.internet.MimeMessage;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
@@ -36,38 +32,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private RedisUtil redisUtil; // Redis工具类
 
-    @Autowired
-    private JavaMailSender mailSender; // 邮件发送器
-
-    @Autowired
-    private TemplateEngine templateEngine; // 模板引擎
-
     // 验证码过期时间（分钟）
     private static final int VERIFICATION_CODE_EXPIRE_TIME = 5;
 
     /**
      * 用户注册实现
-     * @param userDTO 用户注册信息
+     * @param registerDTO 用户注册信息
      * @return 注册结果
      */
     @Override
-    public boolean register(UserDTO userDTO) {
+    public boolean register(RegisterDTO registerDTO) {
+        // 验证码校验
+        String code = redisUtil.getString("verification_code:" + registerDTO.getEmail());
+        if (code == null) {
+            throw new RuntimeException("验证码已过期");
+        }
+        if (!code.equalsIgnoreCase(registerDTO.getCaptchaCode())) {
+            throw new RuntimeException("验证码错误");
+        }
+        // 验证成功后，删除Redis中的验证码
+        redisUtil.del("verification_code:" + registerDTO.getEmail());
+
         // 检查用户名是否已存在
-        if (existsByUsername(userDTO.getUsername())) {
+        if (existsByUsername(registerDTO.getUsername())) {
             throw new RuntimeException("用户名已存在");
         }
 
         // 检查邮箱是否已存在
-        if (existsByEmail(userDTO.getEmail())) {
+        if (existsByEmail(registerDTO.getEmail())) {
             throw new RuntimeException("邮箱已被注册");
         }
 
         // 创建用户实体
         User user = new User();
-        user.setUsername(userDTO.getUsername());
-        user.setEmail(userDTO.getEmail());
+        user.setUsername(registerDTO.getUsername());
+        user.setEmail(registerDTO.getEmail());
         // 对密码进行加密处理
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setStatus(1); // 默认启用状态
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
@@ -103,47 +104,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user;
     }
 
-    /**
-     * 发送重置密码邮件
-     * @param email 邮箱地址
-     * @return 是否发送成功
-     */
-    @Override
-    public boolean sendResetPasswordEmail(String email) {
-        // 检查邮箱是否存在于系统中
-        if (!existsByEmail(email)) {
-            throw new RuntimeException("邮箱不存在");
-        }
-
-        // 生成6位数字验证码
-        String verificationCode = RandomUtil.randomNumbers(6);
-
-        // 将验证码存储到Redis中，设置过期时间为5分钟
-        redisUtil.setString("reset_password_code:" + email, verificationCode,
-                VERIFICATION_CODE_EXPIRE_TIME, TimeUnit.MINUTES);
-
-        // 准备邮件内容
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            helper.setTo(email);
-            helper.setSubject("重置密码验证码");
-
-            // 邮件正文
-            String content = "您的重置密码验证码是：" + verificationCode + "，有效期为" +
-                    VERIFICATION_CODE_EXPIRE_TIME + "分钟，请及时使用。";
-            helper.setText(content, true);
-
-            // 发送邮件
-            mailSender.send(mimeMessage);
-            return true;
-        } catch (Exception e) {
-            // 发送邮件失败时记录错误日志
-            e.printStackTrace();
-            return false;
-        }
-    }
+    
 
     /**
      * 重置密码实现
@@ -178,11 +139,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         int result = userMapper.update(user, queryWrapper);
 
         // 验证码使用后立即删除
-        redisUtil.deleteKey("reset_password_code:" + email);
+        redisUtil.del("reset_password_code:" + email);
 
         return result > 0;
     }
+    /**
+     * 发送重置密码邮件
+     * @param email 邮箱地址
+     * @return 是否发送成功
+     */
+    @Override
+    public boolean sendResetPasswordEmail(String email) {
+        // 检查邮箱是否存在于系统中
+        if (!existsByEmail(email)) {
+            throw new RuntimeException("邮箱不存在");
+        }
 
+        // 生成6位数字验证码
+        String verificationCode = RandomUtil.randomNumbers(6);
+
+        // 将验证码存储到Redis中，设置过期时间为5分钟
+        boolean success = redisUtil.setVerificationCode("reset_password_code:" + email, verificationCode,
+                VERIFICATION_CODE_EXPIRE_TIME, TimeUnit.MINUTES);
+
+        if (!success) {
+            throw new RuntimeException("验证码存储失败，请稍后重试");
+        }
+
+        // 发送邮件
+        try {
+            MailUtil.sendVerificationEmail(email, "重置密码验证码", verificationCode);
+            return true;
+        } catch (Exception e) {
+            // 发送邮件失败时记录错误日志
+            e.printStackTrace();
+            return false;
+        }
+    }
     /**
      * 检查用户名是否存在
      * @param username 用户名
@@ -205,5 +198,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("email", email);
         return userMapper.selectCount(queryWrapper) > 0;
+    }
+
+    /**
+     * 发送通用验证码
+     * @param email 邮箱地址
+     * @return 是否发送成功
+     */
+    @Override
+    public boolean sendVerificationCode(String email) {
+        // 检查邮箱是否已注册
+        if (existsByEmail(email)) {
+            throw new RuntimeException("邮箱已被注册");
+        }
+
+        // 生成6位数字验证码
+        String verificationCode = RandomUtil.randomNumbers(6);
+
+        // 将验证码存储到Redis中，设置过期时间为5分钟
+        boolean success = redisUtil.setVerificationCode("verification_code:" + email, verificationCode,
+                VERIFICATION_CODE_EXPIRE_TIME, TimeUnit.MINUTES);
+
+        if (!success) {
+            throw new RuntimeException("验证码存储失败，请稍后重试");
+        }
+
+        // 发送邮件
+        try {
+            MailUtil.sendVerificationEmail(email, "您的验证码", verificationCode);
+            return true;
+        } catch (Exception e) {
+            // 发送邮件失败时记录错误日志
+            e.printStackTrace();
+            return false;
+        }
     }
 }

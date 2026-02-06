@@ -1,64 +1,178 @@
 package com.example.computerassociation.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * Redis工具类，用于缓存操作
- * 存储验证码、令牌等临时数据
+ * Redis工具类 (基于RedisTemplate封装)
  */
 @Component
 public class RedisUtil {
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 设置字符串值
+     * 指定缓存失效时间
      * @param key 键
-     * @param value 值
+     * @param time 时间(秒)
+     * @return
      */
-    public void setString(String key, String value) {
-        redisTemplate.opsForValue().set(key, value);
+    public boolean expire(String key, long time) {
+        try {
+            if (time > 0) {
+                redisTemplate.expire(key, time, TimeUnit.SECONDS);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
-     * 设置带过期时间的字符串值
-     * @param key 键
-     * @param value 值
-     * @param timeout 过期时间
-     * @param unit 时间单位
+     * 根据key 获取过期时间
+     * @param key 键 不能为null
+     * @return 时间(秒) 返回0代表为永久有效
      */
-    public void setString(String key, String value, long timeout, TimeUnit unit) {
-        redisTemplate.opsForValue().set(key, value, timeout, unit);
+    public long getExpire(String key) {
+        return redisTemplate.getExpire(key, TimeUnit.SECONDS);
     }
 
     /**
-     * 获取字符串值
+     * 判断key是否存在
+     * @param key 键
+     * @return true 存在 false不存在
+     */
+    public boolean hasKey(String key) {
+        try {
+            return redisTemplate.hasKey(key);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 删除缓存
+     * @param key 可以传一个值 或多个
+     */
+    @SuppressWarnings("unchecked")
+    public void del(String... key) {
+        if (key != null && key.length > 0) {
+            if (key.length == 1) {
+                redisTemplate.delete(key[0]);
+            } else {
+                redisTemplate.delete(java.util.Arrays.asList(key));
+            }
+        }
+    }
+
+    // ============================String=============================
+    /**
+     * 普通缓存获取
      * @param key 键
      * @return 值
      */
+    public Object get(String key) {
+        return key == null ? null : redisTemplate.opsForValue().get(key);
+    }
+
+    /**
+     * 普通缓存放入
+     * @param key 键
+     * @param value 值
+     * @return true成功 false失败
+     */
+    public boolean set(String key, Object value) {
+        try {
+            redisTemplate.opsForValue().set(key, value);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 普通缓存放入并设置时间
+     * @param key 键
+     * @param value 值
+     * @param time 时间(秒) time要大于0 如果time小于等于0 将设置为无限期
+     * @return true成功 false 失败
+     */
+    public boolean set(String key, Object value, long time) {
+        try {
+            if (time > 0) {
+                redisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
+            } else {
+                set(key, value);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 普通缓存放入并设置时间
+     * @param key 键
+     * @param value 值
+     * @param time 时间
+     * @param timeUnit 时间单位
+     * @return true成功 false 失败
+     */
+    public boolean set(String key, Object value, long time, TimeUnit timeUnit) {
+        try {
+            if (time > 0) {
+                redisTemplate.opsForValue().set(key, value, time, timeUnit);
+            } else {
+                set(key, value);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public String getString(String key) {
-        return redisTemplate.opsForValue().get(key);
+        Object value = get(key);
+        return value != null ? value.toString() : null;
     }
-
+    
     /**
-     * 删除指定键
+     * 验证码专用存储方法，带调试信息
      * @param key 键
+     * @param value 值
+     * @param time 时间
+     * @param timeUnit 时间单位
+     * @return true成功 false 失败
      */
-    public Boolean deleteKey(String key) {
-        return redisTemplate.delete(key);
-    }
-
-    /**
-     * 判断键是否存在
-     * @param key 键
-     * @return 是否存在
-     */
-    public Boolean hasKey(String key) {
-        return redisTemplate.hasKey(key);
+    public boolean setVerificationCode(String key, Object value, long time, TimeUnit timeUnit) {
+        try {
+            if (time > 0) {
+                redisTemplate.opsForValue().set(key, value, time, timeUnit);
+                
+                // 验证是否存储成功
+                Object retrievedValue = redisTemplate.opsForValue().get(key);
+                if (retrievedValue != null) {
+                    return true;
+                } else {
+                    System.err.println("Failed to store verification code in Redis: " + key);
+                    return false;
+                }
+            } else {
+                return set(key, value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

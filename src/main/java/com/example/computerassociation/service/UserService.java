@@ -1,5 +1,6 @@
 package com.example.computerassociation.service;
 
+import com.example.computerassociation.dto.RegisterDTO;
 import com.example.computerassociation.dto.UserDTO;
 import com.example.computerassociation.entity.User;
 
@@ -11,10 +12,10 @@ public interface UserService {
 
     /**
      * 用户注册
-     * @param userDTO 用户注册信息
+     * @param registerDTO 用户注册信息
      * @return 注册结果
      */
-    boolean register(UserDTO userDTO);
+    boolean register(RegisterDTO registerDTO);
 
     /**
      * 用户登录
@@ -24,12 +25,6 @@ public interface UserService {
      */
     User login(String username, String password);
 
-    /**
-     * 发送重置密码邮件
-     * @param email 邮箱地址
-     * @return 是否发送成功
-     */
-    boolean sendResetPasswordEmail(String email);
 
     /**
      * 重置密码
@@ -39,6 +34,13 @@ public interface UserService {
      * @return 是否重置成功
      */
     boolean resetPassword(String email, String newPassword, String verificationCode);
+
+    /**
+     * 发送通用验证码
+     * @param email 邮箱地址
+     * @return 是否发送成功
+     */
+    boolean sendVerificationCode(String email);
 
     /**
      * 检查用户名是否存在
@@ -53,4 +55,6 @@ public interface UserService {
      * @return 是否存在
      */
     boolean existsByEmail(String email);
+
+    boolean sendResetPasswordEmail(String email);
 }

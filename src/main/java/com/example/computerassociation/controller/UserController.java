@@ -3,6 +3,7 @@ package com.example.computerassociation.controller;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import com.example.computerassociation.common.Result;
+import com.example.computerassociation.dto.RegisterDTO;
 import com.example.computerassociation.dto.UserDTO;
 import com.example.computerassociation.entity.User;
 import com.example.computerassociation.service.UserService;
@@ -39,27 +40,60 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
+
+    /**
+     * 获取图片验证码接口
+     * @return 包含验证码key和Base64图片的Map
+     */
+    @GetMapping("/captcha")
+    public Result<Map<String, String>> getCaptcha() {
+        // 生成线性验证码
+        LineCaptcha lineCaptcha = CaptchaUtil.createLineCaptcha(200, 100, 4, 150);
+        String captchaCode = lineCaptcha.getCode();
+        String captchaImage = lineCaptcha.getImageBase64();
+
+        // 生成唯一的验证码key
+        String captchaKey = UUID.randomUUID().toString();
+
+        // 将验证码存入Redis，有效期5分钟
+        redisUtil.set(captchaKey, captchaCode, 5, TimeUnit.MINUTES);
+
+        // 返回验证码key和图片
+        Map<String, String> data = new HashMap<>();
+        data.put("captchaKey", captchaKey);
+        data.put("captchaImage", "data:image/png;base64," + captchaImage);
+
+        return Result.success(data);
+    }
+
     /**
      * 用户注册接口
-     * @param userDTO 用户注册信息
+     * @param registerDTO 用户注册信息
      * @return 注册结果
      */
     @PostMapping("/register")
-    public Result<String> register(@RequestBody UserDTO userDTO) {
+    public Result<String> register(@RequestBody RegisterDTO registerDTO) {
         try {
             // 参数验证
-            if (userDTO.getUsername() == null || userDTO.getUsername().trim().isEmpty()) {
+            if (registerDTO.getUsername() == null || registerDTO.getUsername().trim().isEmpty()) {
                 return Result.fail("用户名不能为空");
             }
-            if (userDTO.getEmail() == null || userDTO.getEmail().trim().isEmpty()) {
+            if (registerDTO.getEmail() == null || registerDTO.getEmail().trim().isEmpty()) {
                 return Result.fail("邮箱不能为空");
             }
-            if (userDTO.getPassword() == null || userDTO.getPassword().length() < 6) {
+            if (registerDTO.getPassword() == null || registerDTO.getPassword().length() < 6) {
                 return Result.fail("密码长度不能少于6位");
+            }
+            if (registerDTO.getCaptchaKey() == null || registerDTO.getCaptchaKey().trim().isEmpty()) {
+                return Result.fail("验证码key不能为空");
+            }
+            if (registerDTO.getCaptchaCode() == null || registerDTO.getCaptchaCode().trim().isEmpty()) {
+                return Result.fail("验证码不能为空");
             }
 
             // 执行注册
-            boolean success = userService.register(userDTO);
+            boolean success = userService.register(registerDTO);
             if (success) {
                 return Result.success("注册成功");
             } else {
@@ -108,15 +142,21 @@ public class UserController {
         }
     }
 
+
+
     /**
-     * 发送重置密码验证码接口
-     * @param email 邮箱地址
+     * 发送通用验证码接口
+     * @param payload 包含邮箱地址的请求体
      * @return 发送结果
      */
-    @PostMapping("/send-reset-code")
-    public Result<String> sendResetCode(@RequestParam String email) {
+    @PostMapping("/send-code")
+    public Result<String> sendCode(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            return Result.fail("邮箱不能为空");
+        }
         try {
-            boolean success = userService.sendResetPasswordEmail(email);
+            boolean success = userService.sendVerificationCode(email);
             if (success) {
                 return Result.success("验证码已发送至您的邮箱");
             } else {
@@ -135,7 +175,7 @@ public class UserController {
      * @param resetInfo 重置密码信息（邮箱、新密码、验证码）
      * @return 重置结果
      */
-    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
     public Result<String> resetPassword(@RequestBody Map<String, String> resetInfo) {
         String email = resetInfo.get("email");
         String newPassword = resetInfo.get("newPassword");
@@ -166,7 +206,23 @@ public class UserController {
             return Result.fail("系统错误");
         }
     }
-
+    @PostMapping("/send-reset-code")
+    public Result<String> sendcode(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        try {
+            boolean success = userService.sendResetPasswordEmail(email);
+            if (success) {
+                return Result.success("验证码已发送至您的邮箱");
+            } else {
+                return Result.fail("验证码发送失败，请稍后再试");
+            }
+        } catch (RuntimeException e) {
+            return Result.fail(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail("系统错误");
+        }
+    }
     /**
      * 获取用户信息接口（需要JWT验证）
      * @param token JWT令牌
