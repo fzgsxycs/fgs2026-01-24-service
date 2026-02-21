@@ -59,7 +59,7 @@ mybatis-plus:
 
 # JWT配置
 jwt:
-  secret: computer_association_secret_key  # JWT密钥，生产环境中应更安全
+  secret: computerassociationsecretkeycomputerassociationsecretkeycomputerassociationsecretkey1234567890  # JWT密钥，生产环境中应更安全
   expiration: 86400  # JWT过期时间（秒），默认为24小时
 
 # 日志配置
