@@ -1155,3 +1155,60 @@ This generated password is for development use only. Your security configuration
 2026-03-16 21:35:12.153 [RMI TCP Connection(2)-198.18.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
 2026-03-16 21:35:12.153 [RMI TCP Connection(2)-198.18.0.1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
 2026-03-16 21:35:12.154 [RMI TCP Connection(2)-198.18.0.1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-03-16 21:44:56.259 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-16 21:45:00.564 [background-preinit] INFO  org.hibernate.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-03-16 21:45:00.590 [main] INFO  c.e.c.ComputerAssociationApplication - Starting ComputerAssociationApplication using Java 17.0.15 with PID 74864 (D:\ADM\JavaExE\fgs2026-01-24-service\target\classes started by Administrator in D:\ADM\JavaExE\fgs2026-01-24-service)
+2026-03-16 21:45:00.591 [main] DEBUG c.e.c.ComputerAssociationApplication - Running with Spring Boot v3.5.10, Spring v6.2.15
+2026-03-16 21:45:00.591 [main] INFO  c.e.c.ComputerAssociationApplication - The following 2 profiles are active: "liquibase", "redis"
+2026-03-16 21:45:01.280 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-16 21:45:01.282 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-03-16 21:45:01.298 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2026-03-16 21:45:01.756 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-03-16 21:45:01.765 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-03-16 21:45:01.766 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-03-16 21:45:01.766 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.50]
+2026-03-16 21:45:01.802 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-03-16 21:45:01.802 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1189 ms
+2026-03-16 21:45:02.212 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-03-16 21:45:02.334 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@7b5c9412
+2026-03-16 21:45:02.335 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-03-16 21:45:02.655 [main] INFO  liquibase.changelog - Reading from public.databasechangelog
+2026-03-16 21:45:02.675 [main] INFO  liquibase.ui - Database is up to date, no changesets to execute
+2026-03-16 21:45:02.677 [main] INFO  liquibase.changelog - Reading from public.databasechangelog
+2026-03-16 21:45:02.680 [main] INFO  liquibase.util - UPDATE SUMMARY
+2026-03-16 21:45:02.680 [main] INFO  liquibase.util - Run:                          0
+2026-03-16 21:45:02.680 [main] INFO  liquibase.util - Previously run:               1
+2026-03-16 21:45:02.680 [main] INFO  liquibase.util - Filtered out:                 0
+2026-03-16 21:45:02.680 [main] INFO  liquibase.util - -------------------------------
+2026-03-16 21:45:02.680 [main] INFO  liquibase.util - Total change sets:            1
+2026-03-16 21:45:02.681 [main] INFO  liquibase.util - Update summary generated
+2026-03-16 21:45:02.681 [main] INFO  liquibase.command - Command execution complete
+2026-03-16 21:45:04.167 [main] INFO  o.s.b.actuate.endpoint.web.EndpointLinksResolver - Exposing 1 endpoint beneath base path '/actuator'
+2026-03-16 21:45:04.186 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: e242e9a6-623d-4b73-8779-4e098d936c82
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-03-16 21:45:04.189 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-03-16 21:45:04.322 [main] INFO  c.b.m.e.spring.MybatisPlusApplicationContextAware - Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@53bc1328
+2026-03-16 21:45:04.552 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-03-16 21:45:04.566 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-03-16 21:45:04.576 [main] INFO  c.e.c.ComputerAssociationApplication - Started ComputerAssociationApplication in 4.354 seconds (process running for 4.781)
+2026-03-16 21:45:04.580 [main] INFO  c.e.c.ComputerAssociationApplication - 
+
+  ██████╗ ██████╗ ███████╗ █████╗ ████████╗██╗██╗   ██╗████████╗███████╗
+  ██╔══██╗██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║██║   ██║╚══██╔══╝██╔════╝
+  ██║  ██║██████╔╝█████╗  ███████║   ██║   ██║██║   ██║   ██║   █████╗  
+  ██║  ██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║╚██╗ ██╔╝   ██║   ██╔══╝  
+  ██████╔╝██║  ██║███████╗██║  ██║   ██║   ██║ ╚████╔╝    ██║   ███████╗
+  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═══╝     ╚═╝   ╚══════╝
+
+  >>> 计算机协会管理系统启动成功 <<<
+  >>> Swagger API 文档: http://localhost:8080/swagger-ui.html <<<
+
+
+2026-03-16 21:45:05.002 [RMI TCP Connection(2)-198.18.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-16 21:45:05.002 [RMI TCP Connection(2)-198.18.0.1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-03-16 21:45:05.003 [RMI TCP Connection(2)-198.18.0.1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-03-16 21:45:34.122 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete

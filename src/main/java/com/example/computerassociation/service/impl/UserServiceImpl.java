@@ -65,14 +65,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User login(String username, String password) {
+        if (redisUtil.isLoginLocked(username)) {
+            long remainingTime = redisUtil.getLoginLockRemainingTime(username);
+            long remainingMinutes = remainingTime / 60;
+            throw BusinessException.of("账户已被锁定，请 " + remainingMinutes + " 分钟后重试");
+        }
+
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username).or().eq("email", username);
 
         User user = userMapper.selectOne(queryWrapper);
 
         if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            redisUtil.recordLoginFailure(username);
             return null;
         }
+
+        redisUtil.clearLoginFailure(username);
 
         user.setLastLoginTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
@@ -113,6 +122,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw BusinessException.of("邮箱不存在");
         }
 
+        if (!redisUtil.canSendCode(email)) {
+            long remainingTime = redisUtil.getCodeSendRemainingTime(email);
+            throw BusinessException.of("请求过于频繁，请 " + remainingTime + " 秒后重试");
+        }
+
         String verificationCode = RandomUtil.randomNumbers(6);
 
         boolean success = redisUtil.setVerificationCode("reset_password_code:" + email, verificationCode,
@@ -121,6 +135,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!success) {
             throw BusinessException.of("验证码存储失败，请稍后重试");
         }
+
+        redisUtil.recordCodeSent(email);
 
         try {
             MailUtil.sendVerificationEmail(email, "重置密码验证码", verificationCode);
@@ -151,6 +167,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw BusinessException.of("邮箱已被注册");
         }
 
+        if (!redisUtil.canSendCode(email)) {
+            long remainingTime = redisUtil.getCodeSendRemainingTime(email);
+            throw BusinessException.of("请求过于频繁，请 " + remainingTime + " 秒后重试");
+        }
+
         String verificationCode = RandomUtil.randomNumbers(6);
 
         boolean success = redisUtil.setVerificationCode("verification_code:" + email, verificationCode,
@@ -159,6 +180,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!success) {
             throw BusinessException.of("验证码存储失败，请稍后重试");
         }
+
+        redisUtil.recordCodeSent(email);
 
         try {
             MailUtil.sendVerificationEmail(email, "您的验证码", verificationCode);

@@ -15,6 +15,13 @@ public class RedisUtil {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    private static final String LOGIN_FAIL_PREFIX = "login_fail:";
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long LOGIN_LOCK_DURATION = 15;
+
+    private static final String CODE_SEND_PREFIX = "code_send:";
+    private static final long CODE_SEND_INTERVAL = 60;
+
     public boolean expire(String key, long time) {
         try {
             if (time > 0) {
@@ -98,6 +105,36 @@ public class RedisUtil {
         }
     }
 
+    public long increment(String key) {
+        try {
+            Long result = redisTemplate.opsForValue().increment(key);
+            return result != null ? result : 0;
+        } catch (Exception e) {
+            log.error("计数器自增失败: key={}", key, e);
+            return 0;
+        }
+    }
+
+    public long increment(String key, long delta) {
+        try {
+            Long result = redisTemplate.opsForValue().increment(key, delta);
+            return result != null ? result : 0;
+        } catch (Exception e) {
+            log.error("计数器自增失败: key={}, delta={}", key, delta, e);
+            return 0;
+        }
+    }
+
+    public long decrement(String key) {
+        try {
+            Long result = redisTemplate.opsForValue().decrement(key);
+            return result != null ? result : 0;
+        } catch (Exception e) {
+            log.error("计数器自减失败: key={}", key, e);
+            return 0;
+        }
+    }
+
     public boolean setVerificationCode(String key, Object value, long time, TimeUnit timeUnit) {
         try {
             if (time > 0) {
@@ -116,5 +153,49 @@ public class RedisUtil {
             log.error("验证码存储失败: key={}", key, e);
             return false;
         }
+    }
+
+    public boolean isLoginLocked(String username) {
+        String key = LOGIN_FAIL_PREFIX + username;
+        String countStr = getString(key);
+        if (countStr == null) {
+            return false;
+        }
+        int count = Integer.parseInt(countStr);
+        return count >= MAX_LOGIN_ATTEMPTS;
+    }
+
+    public long getLoginLockRemainingTime(String username) {
+        String key = LOGIN_FAIL_PREFIX + username;
+        return getExpire(key);
+    }
+
+    public void recordLoginFailure(String username) {
+        String key = LOGIN_FAIL_PREFIX + username;
+        long count = increment(key);
+        if (count == 1) {
+            expire(key, LOGIN_LOCK_DURATION * 60);
+        }
+        log.warn("登录失败记录: username={}, 次数={}/{}", username, count, MAX_LOGIN_ATTEMPTS);
+    }
+
+    public void clearLoginFailure(String username) {
+        String key = LOGIN_FAIL_PREFIX + username;
+        del(key);
+    }
+
+    public boolean canSendCode(String email) {
+        String key = CODE_SEND_PREFIX + email;
+        return !hasKey(key);
+    }
+
+    public long getCodeSendRemainingTime(String email) {
+        String key = CODE_SEND_PREFIX + email;
+        return getExpire(key);
+    }
+
+    public void recordCodeSent(String email) {
+        String key = CODE_SEND_PREFIX + email;
+        set(key, "1", CODE_SEND_INTERVAL);
     }
 }
