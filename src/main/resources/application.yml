@@ -35,6 +35,11 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400}
 
+management:
+  health:
+    mail:
+      enabled: false
+
 logging:
   level:
     com.example.computerassociation: DEBUG
