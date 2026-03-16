@@ -2,6 +2,7 @@ package com.example.computerassociation.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,13 +20,13 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("POST", "/api/user/register").permitAll()
-                        .requestMatchers("POST", "/api/user/login").permitAll()
-                        .requestMatchers("GET", "/api/user/captcha").permitAll()
-                        .requestMatchers("POST", "/api/user/send-code").permitAll()
-                        .requestMatchers("PUT", "/api/user/reset-password").permitAll()
-                        .requestMatchers("POST", "/api/email-verification/**").permitAll()
-                        .requestMatchers("OPTIONS", "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/captcha").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/send-code").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/user/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/email-verification/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
