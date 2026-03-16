@@ -57,4 +57,6 @@ public interface UserService {
     boolean existsByEmail(String email);
 
     boolean sendResetPasswordEmail(String email);
+
+    User getByUsername(String username);
 }
